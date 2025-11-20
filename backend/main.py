@@ -28,7 +28,8 @@ os.makedirs(RESULT_DIR, exist_ok=True)
 os.makedirs("checkpoints", exist_ok=True) # 確保 checkpoints 資料夾存在
 
 # 初始化模型 (全域變數，啟動時載入一次)
-expander = VideoExpander(model_path=MODEL_PATH, device='cpu') 
+# device=None 會自動偵測: CUDA > MPS > CPU
+expander = VideoExpander(model_path=MODEL_PATH, device=None) 
 
 # --- 靜態檔案服務 ---
 app.mount("/results", StaticFiles(directory=RESULT_DIR), name="results")

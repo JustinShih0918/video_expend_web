@@ -14,8 +14,19 @@ import shutil
 # from model import Generator 
 
 class VideoExpander:
-    def __init__(self, model_path, device='cuda'):
-        self.device = torch.device(device if torch.cuda.is_available() else 'cpu')
+    def __init__(self, model_path, device=None):
+        # 自動偵測最佳裝置
+        if device is None:
+            if torch.cuda.is_available():
+                self.device = torch.device('cuda') # NVIDIA GPU
+            elif torch.backends.mps.is_available():
+                self.device = torch.device('mps')  # Mac M1/M2/M3 GPU
+                print("Accelerated with macOS Metal Performance Shaders (MPS)")
+            else:
+                self.device = torch.device('cpu')
+        else:
+            self.device = torch.device(device)
+            
         print(f"Using device: {self.device}")
         
         # --- [TODO] 載入你的模型 ---
