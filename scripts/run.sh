@@ -28,6 +28,16 @@ cleanup() {
 }
 trap cleanup SIGINT
 
+# 啟動時自動清理舊影片
+echo "[Cleanup] Cleaning old video files..."
+if [ -d "backend/results" ]; then
+    # 刪除所有 .mp4 檔案 (2>/dev/null 用來隱藏如果沒有檔案時的錯誤訊息)
+    rm -f backend/results/*.mp4 2>/dev/null
+    echo "   backend/results/ 已清空"
+else
+    echo " backend/results/ 目錄不存在 (稍後會自動建立)"
+fi
+
 # 2. 檢查 FFmpeg
 echo "Checking FFmpeg..."
 if ! command -v ffmpeg &> /dev/null; then
