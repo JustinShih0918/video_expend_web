@@ -43,8 +43,8 @@ Ensure your computer has the following installed:
 
 #### 2\. Place Model Weights
 
-Place your trained model weight file (e.g., `best_model.pth`) in the following path:
-`backend/checkpoints/best_model.pth`
+Place your trained model weight file (e.g., `best_model.pt`) in the following path:
+`backend/checkpoints/best_model.pt`
 
 #### 3\. Install & Run
 
@@ -54,13 +54,13 @@ We provide a one-click script that automatically creates the virtual environment
 
 ```bash
 # 1. Grant execution permissions (Run once)
-chmod +x install.sh run.sh
+chmod +x scripts/install.sh scripts/run.sh
 
 # 2. Install Environment (Run once)
-./install.sh
+./scripts/install.sh
 
 # 3. Start Services (Run every time you develop)
-./run.sh
+./scripts/run.sh
 ```
 
 After startup, access:
@@ -80,14 +80,14 @@ Suitable for quick previews or server deployment without manually configuring Py
 
 #### 2\. Place Model Weights
 
-Similarly, place `best_model.pth` into `backend/checkpoints/`.
+Similarly, place `best_model.pt` into `backend/checkpoints/`.
 
 #### 3\. Start Container
 
 Run the following command in the project root:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 After startup, access:
@@ -124,9 +124,9 @@ After startup, access:
 
       * This is usually because browsers do not support OpenCV's default `mp4v` codec. This project uses FFmpeg to transcode to H.264 (`libx264`) automatically. Please ensure FFmpeg is correctly installed on your system.
 
-2.  **Cannot find `best_model.pth`?**
+2.  **Cannot find `best_model.pt`?**
 
-      * Due to file size limits, `.pth` files are not included in the Git repository. Please obtain the weight file from your team members and place it in `backend/checkpoints/`.
+      * Due to file size limits, `.pt` files are not included in the Git repository. Please obtain the weight file from your team members and place it in `backend/checkpoints/`.
 
 3.  **How to collaborate?**
 
