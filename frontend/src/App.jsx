@@ -8,7 +8,9 @@ function App() {
   const [status, setStatus] = useState('idle'); 
   const [videoUrls, setVideoUrls] = useState({ original: '', processed: '' });
   const [progress, setProgress] = useState(0); 
+  const [progressMessage, setProgressMessage] = useState('');
   const [error, setError] = useState(null);
+  const [videoList, setVideoList] = useState([]);
 
   // Refs
   const vid1Ref = useRef(null);
@@ -61,7 +63,7 @@ function App() {
     }
   };
 
-  // Polling Status
+  // Polling Status with Real Progress
   useEffect(() => {
     let intervalId;
     if (status === 'processing' && taskId) {
@@ -70,21 +72,98 @@ function App() {
           const res = await fetch(`http://localhost:8000/status/${taskId}`);
           const data = await res.json();
           
-          // 假進度條動畫 (直到 90%)
-          setProgress(old => (old < 90 ? old + Math.random() * 10 : old));
+          // 使用後端回傳的真實進度
+          if (data.progress !== undefined) {
+            setProgress(data.progress);
+          }
+          if (data.message) {
+            setProgressMessage(data.message);
+          }
 
           if (data.status === 'completed') {
             setStatus('completed');
             setProgress(100);
+            setProgressMessage('處理完成！');
+            clearInterval(intervalId);
+          } else if (data.status === 'error') {
+            setError(data.message || '處理失敗');
+            setStatus('idle');
             clearInterval(intervalId);
           }
         } catch (err) {
           console.error("Status check failed", err);
         }
-      }, 2000);
+      }, 1000); // 更頻繁更新 (1秒)
     }
     return () => clearInterval(intervalId);
   }, [status, taskId]);
+
+  // Fetch video list on mount and when processing completes
+  useEffect(() => {
+    fetchVideoList();
+    // Refresh list every 10 seconds
+    const listInterval = setInterval(fetchVideoList, 10000);
+    return () => clearInterval(listInterval);
+  }, []);
+
+  // Also refresh when a video completes
+  useEffect(() => {
+    if (status === 'completed') {
+      fetchVideoList();
+    }
+  }, [status]);
+
+  const fetchVideoList = async () => {
+    try {
+      const res = await fetch('http://localhost:8000/videos/list');
+      const data = await res.json();
+      setVideoList(data.videos || []);
+    } catch (err) {
+      console.error("Failed to fetch video list", err);
+    }
+  };
+
+  const loadDemoVideo = (video) => {
+    setVideoUrls({
+      original: video.original_url,
+      processed: video.expanded_url
+    });
+    setStatus('completed');
+    setProgress(100);
+    setTaskId(video.task_id);
+  };
+
+  const deleteVideo = async (taskId, event) => {
+    event.stopPropagation(); // Prevent triggering loadDemoVideo
+    
+    if (!confirm(`確定要刪除影片 ${taskId} 嗎？`)) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`http://localhost:8000/videos/${taskId}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh the video list
+        fetchVideoList();
+        
+        // Clear current videos if they were deleted
+        if (taskId === taskId) {
+          setVideoUrls({ original: '', processed: '' });
+          setStatus('idle');
+          setProgress(0);
+        }
+      } else {
+        alert(`刪除失敗: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      alert('刪除影片時發生錯誤');
+    }
+  };
 
   // --- Sync Logic ---
   const safePlay = async (videoElem) => {
@@ -109,13 +188,15 @@ function App() {
   // ------------------
 
   return (
-    <div className="container">
-      <header>
-        <h1>AI Video Outpainting</h1>
-        <p className="subtitle">基於 GAN 模型的視訊邊緣生成與擴展技術</p>
-      </header>
-      
-      {/* 上傳區塊：只有在還沒完成時顯示，或者完成後想重新上傳 */}
+    <div className="app-wrapper">
+      {/* Main Content */}
+      <div className="container">
+        <header>
+          <h1>AI Video Outpainting</h1>
+          <p className="subtitle">基於 GAN 模型的視訊邊緣生成與擴展技術</p>
+        </header>
+        
+        {/* 上傳區塊：只有在還沒完成時顯示，或者完成後想重新上傳 */}
       <div className="upload-card">
         <div className="file-input-wrapper">
           <span className="upload-icon">☁️</span>
@@ -137,7 +218,7 @@ function App() {
       {/* 進度條區塊 */}
       {status === 'processing' && (
         <div className="progress-container">
-          <p style={{marginBottom: '10px'}}>正在進行畫面擴充與修復...</p>
+          <p style={{marginBottom: '10px'}}>{progressMessage || '正在進行畫面擴充與修復...'}</p>
           <div className="progress-bar-bg">
             <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
           </div>
@@ -155,12 +236,13 @@ function App() {
           
           <div className="video-grid">
             <div className="video-card">
-              <div className="video-label">Input (256x256)</div>
+              <div className="video-label">Input (192x192)</div>
               <video 
                 ref={vid1Ref}
                 src={videoUrls.original} 
                 controls 
-                muted // 靜音通常比較不會有自動播放問題
+                muted
+                style={{width: '192px', height: '192px', objectFit: 'contain'}}
                 onPlay={() => syncFunc('play', vid1Ref, vid2Ref)}
                 onPause={() => syncFunc('pause', vid1Ref, vid2Ref)}
                 onTimeUpdate={() => syncFunc('time', vid1Ref, vid2Ref)}
@@ -168,13 +250,14 @@ function App() {
               />
             </div>
             <div className="video-card">
-              <div className="video-label" style={{color: 'var(--accent-color)'}}>Output (300x300)</div>
+              <div className="video-label" style={{color: 'var(--accent-color)'}}>Output (256x256)</div>
               <video 
                 className="video-expanded"
                 ref={vid2Ref}
                 src={videoUrls.processed} 
                 controls 
                 muted
+                style={{width: '256px', height: '256px', objectFit: 'contain'}}
                 onPlay={() => syncFunc('play', vid2Ref, vid1Ref)}
                 onPause={() => syncFunc('pause', vid2Ref, vid1Ref)}
                 onTimeUpdate={() => syncFunc('time', vid2Ref, vid1Ref)}
@@ -194,6 +277,46 @@ function App() {
           </div>
         </div>
       )}
+      </div>
+
+      {/* Sidebar */}
+      <div className="sidebar">
+        <h3>📹 處理記錄</h3>
+        <div className="video-list">
+          {videoList.length === 0 ? (
+            <p className="empty-message">尚無處理記錄</p>
+          ) : (
+            videoList.map((video) => (
+              <div 
+                key={video.task_id} 
+                className="video-item"
+                onClick={() => loadDemoVideo(video)}
+              >
+                <div className="video-item-content">
+                  <div>
+                    <div className="video-item-label">
+                      {new Date(video.timestamp * 1000).toLocaleString('zh-TW', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                    <div className="video-item-id">ID: {video.task_id.slice(0, 8)}...</div>
+                  </div>
+                  <button
+                    className="delete-btn"
+                    onClick={(e) => deleteVideo(video.task_id, e)}
+                    title="刪除影片"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

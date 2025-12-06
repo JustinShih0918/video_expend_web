@@ -6,12 +6,16 @@ you can find our model training project at here: [imageExtend](https://github.co
 
 ## Features
 
-  * **AI Video Outpainting**: Uses GAN models to perform outpainting on every frame, reconstructing visual edges.
+  * **AI Video Outpainting**: Uses UNet-based GAN models to perform outpainting on every frame, expanding 192x192 input to 256x256 output.
   * **Automated Pipeline**: The backend automatically handles frame extraction, inference, synthesis, and H.264 transcoding via FFmpeg.
   * **Hardware Acceleration Support**:
       * **macOS**: Supports **MPS (Metal Performance Shaders)** acceleration (M1/M2/M3).
       * **Windows/Linux**: Supports **NVIDIA CUDA** acceleration.
       * **CPU**: Automatic fallback support.
+  * **Flexible Processing**:
+      * Frame sampling support for reduced output file size
+      * Aspect ratio restoration option
+      * Configurable input/output sizes
   * **Synchronized Player**: Supports side-by-side synchronized playback, pausing, and seeking for the original and extended videos.
 
 ## Tech Stack
@@ -43,8 +47,14 @@ Ensure your computer has the following installed:
 
 #### 2\. Place Model Weights
 
-Place your trained model weight file (e.g., `best_model.pt`) in the following path:
-`backend/checkpoints/best_model.pt`
+Place your trained UNetGenerator model checkpoint (e.g., `G_epoch_010.pt`) in the following path:
+`backend/checkpoints/G_epoch_010.pt`
+
+**Model Architecture:**
+- Input: 192x192 RGB frames (automatically resized)
+- Processing: Frames placed in 256x256 canvas with masked borders
+- Model: UNetGenerator (4 input channels: 3 RGB + 1 mask, 3 output channels)
+- Output: 256x256 expanded frames
 
 #### 3\. Install & Run
 
@@ -80,7 +90,7 @@ Suitable for quick previews or server deployment without manually configuring Py
 
 #### 2\. Place Model Weights
 
-Similarly, place `best_model.pt` into `backend/checkpoints/`.
+Similarly, place `G_epoch_010.pt` into `backend/checkpoints/`.
 
 #### 3\. Start Container
 
@@ -98,22 +108,67 @@ After startup, access:
 
 -----
 
+## API Usage
+
+The backend provides additional parameters for advanced video processing:
+
+### Basic Upload
+```bash
+curl -X POST "http://localhost:8000/upload" \
+  -F "file=@video.mp4"
+```
+
+### Frame Sampling (Reduce Output FPS)
+Process only N frames per second (useful for faster processing and smaller output):
+```bash
+curl -X POST "http://localhost:8000/upload" \
+  -F "file=@video.mp4" \
+  -F "frames_count=1"
+```
+
+### Restore Original Aspect Ratio
+By default, output is square (256x256). Enable this to restore original video proportions:
+```bash
+curl -X POST "http://localhost:8000/upload" \
+  -F "file=@video.mp4" \
+  -F "restore_size=true"
+```
+
+### Combined Parameters
+```bash
+curl -X POST "http://localhost:8000/upload" \
+  -F "file=@video.mp4" \
+  -F "frames_count=1" \
+  -F "restore_size=true"
+```
+
+**API Documentation**: Visit [http://localhost:8000/docs](http://localhost:8000/docs) for interactive API docs.
+
+-----
+
 ## Project Structure
 
 ```text
 .
 ├── backend/
-│   ├── checkpoints/       # [Important] Place model weights here
+│   ├── checkpoints/       # [Important] Place model weights here (G_epoch_010.pt)
+│   ├── models/            # UNetGenerator model architecture
+│   │   ├── generator.py   # Model definition
+│   │   └── __init__.py
+│   ├── utils/             # Utility functions
+│   │   ├── mask_utils.py  # Mask processing utilities
+│   │   └── __init__.py
 │   ├── uploads/           # Temporary upload storage
 │   ├── results/           # Processed video storage (Cleared on restart)
 │   ├── main.py            # FastAPI Entry point
-│   ├── core_logic.py      # Core logic (PyTorch Inference + FFmpeg)
+│   ├── core_logic.py      # Core logic (UNetGenerator Inference + FFmpeg)
 │   └── requirements.txt   # Backend dependencies
 ├── frontend/
 │   ├── src/               # React Source code
 │   └── vite.config.js     # Frontend config (Includes API Proxy)
-├── install.sh             # Cross-platform Setup Script
-├── run.sh                 # Cross-platform Launcher Script
+├── scripts/
+│   ├── install.sh         # Cross-platform Setup Script
+│   └── run.sh             # Cross-platform Launcher Script
 ├── docker-compose.yml     # Docker config
 └── README.md
 ```
@@ -124,9 +179,9 @@ After startup, access:
 
       * This is usually because browsers do not support OpenCV's default `mp4v` codec. This project uses FFmpeg to transcode to H.264 (`libx264`) automatically. Please ensure FFmpeg is correctly installed on your system.
 
-2.  **Cannot find `best_model.pt`?**
+2.  **Cannot find `G_epoch_010.pt`?**
 
-      * Due to file size limits, `.pt` files are not included in the Git repository. Please obtain the weight file from your team members and place it in `backend/checkpoints/`.
+      * Due to file size limits, `.pt` files are not included in the Git repository. Please obtain the weight file from your team members and place it in `backend/checkpoints/`. The model uses UNetGenerator architecture trained for image outpainting (192x192 → 256x256).
 
 3.  **How to collaborate?**
 
