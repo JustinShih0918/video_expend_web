@@ -31,9 +31,9 @@ Download the pretrained model and place it in the checkpoints directory:
 
 Run the following command in the project root:
 
-\`\`\`bash
+```bash
 docker compose up --build
-\`\`\`
+```
 
 After startup, access:
 
@@ -125,34 +125,34 @@ After startup, access:
 The backend provides additional parameters for advanced video processing:
 
 ### Basic Upload
-\`\`\`bash
+```bash
 curl -X POST "http://localhost:8000/upload" \\
   -F "file=@video.mp4"
-\`\`\`
+```
 
 ### Frame Sampling (Reduce Output FPS)
 Process only N frames per second (useful for faster processing and smaller output):
-\`\`\`bash
+```bash
 curl -X POST "http://localhost:8000/upload" \\
   -F "file=@video.mp4" \\
   -F "frames_count=1"
-\`\`\`
+```
 
 ### Restore Original Aspect Ratio
 By default, output is square (256x256). Enable this to restore original video proportions:
-\`\`\`bash
+```bash
 curl -X POST "http://localhost:8000/upload" \\
   -F "file=@video.mp4" \\
   -F "restore_size=true"
-\`\`\`
+```
 
 ### Combined Parameters
-\`\`\`bash
+```bash
 curl -X POST "http://localhost:8000/upload" \\
   -F "file=@video.mp4" \\
   -F "frames_count=1" \\
   -F "restore_size=true"
-\`\`\`
+```
 
 **API Documentation**: Visit [http://localhost:8000/docs](http://localhost:8000/docs) for interactive API docs.
 
@@ -160,10 +160,10 @@ curl -X POST "http://localhost:8000/upload" \\
 
 ## Project Structure
 
-\`\`\`text
+```text
 .
 ├── backend/
-│   ├── checkpoints/       # [Important] Place model weights here (download G_epoch_063.pt)
+│   ├── checkpoints/       # Place model weights here (download G_epoch_063.pt)
 │   ├── models/            # UNetGenerator model architecture
 │   │   ├── generator.py   # Model definition
 │   │   └── __init__.py
@@ -183,7 +183,7 @@ curl -X POST "http://localhost:8000/upload" \\
 │   └── run.sh             # Cross-platform Launcher Script
 ├── docker-compose.yml     # Docker config
 └── README.md
-\`\`\`
+```
 
 -----
 
