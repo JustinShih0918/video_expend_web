@@ -79,7 +79,7 @@ We provide a one-click script that automatically creates the virtual environment
 
 **Mac / Linux / Windows (Git Bash):**
 
-\`\`\`bash
+```bash
 # 1. Grant execution permissions (Run once)
 chmod +x scripts/install.sh scripts/run.sh
 
@@ -88,7 +88,7 @@ chmod +x scripts/install.sh scripts/run.sh
 
 # 3. Start Services (Run every time you develop)
 ./scripts/run.sh
-\`\`\`
+```
 
 After startup, access:
 
@@ -102,9 +102,9 @@ After startup, access:
   * **AI Video Outpainting**: Uses UNet-based GAN models to perform outpainting on every frame, expanding 192x192 input to 256x256 output.
   * **Automated Pipeline**: The backend automatically handles frame extraction, inference, synthesis, and H.264 transcoding via FFmpeg.
   * **Hardware Acceleration Support**:
-      * **macOS**: Supports **MPS (Metal Performance Shaders)** acceleration (M1/M2/M3).
-      * **Windows/Linux**: Supports **NVIDIA CUDA** acceleration.
-      * **CPU**: Automatic fallback support.
+      * **macOS**: Supports **MPS (Metal Performance Shaders)** acceleration (M1/M2/M3), only for local deployment.
+      * **Windows/Linux**: Supports **NVIDIA CUDA** acceleration, only for local deployment.
+      * **CPU**: Automatic fallback support, default for docker deployment.
   * **Flexible Processing**:
       * Frame sampling support for reduced output file size
       * Aspect ratio restoration option
