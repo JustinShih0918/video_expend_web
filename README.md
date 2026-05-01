@@ -1,23 +1,20 @@
 # GAN Video Outpainting Web App
 
-Full-stack AI video outpainting application that extends the visible area around uploaded videos using a trained GAN model. The app provides a React interface, FastAPI backend, PyTorch inference pipeline, FFmpeg video transcoding, Docker deployment, and synchronized before/after playback for visual comparison.
+A full-stack video outpainting application that extends the visible area around uploaded videos using a trained GAN model. The app includes a React frontend, FastAPI backend, PyTorch inference pipeline, FFmpeg video transcoding, Docker deployment, and synchronized original-vs-extended playback.
 
-This repository productizes the model training work from [imageExtend](https://github.com/JustinShih0918/imageExtend).
+This repository uses the model trained in [imageExtend](https://github.com/JustinShih0918/imageExtend).
 
-## Resume Summary
+## Features
 
-Built a full-stack AI video expansion platform that accepts uploaded videos, processes frames through a UNet-based GAN outpainting model, reconstructs H.264 playback videos with FFmpeg, and displays synchronized original-vs-extended comparisons in a modern web UI. The system supports Docker deployment, local GPU acceleration through CUDA or macOS MPS, frame sampling, aspect-ratio restoration, progress tracking, and interactive FastAPI documentation.
-
-## Key Features
-
-- **AI video outpainting**: expands 192x192 input frames into 256x256 generated frames using a trained UNetGenerator.
-- **End-to-end video pipeline**: extracts frames, runs PyTorch inference, writes processed videos, and transcodes output to browser-friendly H.264.
-- **Full-stack web app**: React frontend communicates with a FastAPI backend for upload, processing status, and result playback.
-- **Synchronized comparison viewer**: original and expanded videos can be played, paused, and scrubbed together.
-- **Progress tracking**: backend exposes task progress while video processing runs in the background.
-- **Flexible processing controls**: supports frame sampling and optional aspect-ratio restoration.
-- **Hardware-aware inference**: automatically selects CUDA, macOS MPS, or CPU depending on the local environment.
-- **Deployment options**: Docker Compose for repeatable setup and local scripts for GPU-accessible development.
+- **Video outpainting**: expands `192x192` input frames into `256x256` frames with a trained UNetGenerator.
+- **Upload workflow**: accepts video uploads through the web UI or FastAPI endpoint.
+- **Background processing**: runs video processing tasks on the backend while exposing progress status.
+- **Frame processing pipeline**: uses OpenCV for frame extraction/resizing and PyTorch for model inference.
+- **H.264 output**: uses FFmpeg to generate browser-playable videos.
+- **Synchronized comparison**: displays original and expanded videos side by side with matched playback controls.
+- **Processing options**: supports frame sampling and optional restoration to the original aspect ratio.
+- **Hardware detection**: uses CUDA, macOS MPS, or CPU depending on the local environment.
+- **Deployment options**: supports Docker Compose and local development scripts.
 
 ## Architecture
 
@@ -33,13 +30,13 @@ React + Vite frontend
   -> Synchronized original vs expanded playback
 ```
 
-## Model Architecture
+## Model Flow
 
 - Input frame is resized to `192x192`.
 - The frame is placed in the center of a `256x256` canvas.
 - A binary mask marks the outpainting area.
 - The UNetGenerator receives 4 channels: RGB image plus mask.
-- The model predicts expanded RGB content for the masked region.
+- The model predicts RGB content for the masked region.
 - The final output combines generated borders with the preserved center frame.
 
 ## Tech Stack
@@ -55,7 +52,7 @@ React + Vite frontend
 
 ## Quick Start
 
-Docker deployment is recommended for the simplest setup. Local deployment is recommended when you want GPU acceleration on supported hardware.
+Docker deployment is the simplest setup. Local deployment is useful when direct GPU access is needed.
 
 ### Option A: Docker Deployment
 
@@ -184,16 +181,8 @@ Interactive API documentation is available at `/docs` when the backend is runnin
 ## Relationship to `imageExtend`
 
 - [`imageExtend`](https://github.com/JustinShih0918/imageExtend) contains the model training, dataset preprocessing, image/video inference scripts, generator, discriminator, losses, and metrics.
-- This repository wraps the trained model in a deployable full-stack application for real user workflows.
+- This repository wraps the trained model in a web application with upload, processing, and playback workflows.
 
 ## Reproducibility Notes
 
-With the pretrained checkpoint in place, the app can be run through Docker or local scripts. The generated videos are stored under `backend/results/`, while uploaded files are staged under `backend/uploads/`. Because model weights are large, they are downloaded separately from Google Drive instead of committed to Git.
-
-## Good Next Improvements
-
-- Add a short demo video or GIF to the README.
-- Add `.env.example` files for frontend/backend configuration.
-- Move hard-coded localhost URLs into environment variables.
-- Add automated smoke tests for upload, status polling, and result listing.
-- Add queue management for multiple concurrent video processing jobs.
+With the pretrained checkpoint in place, the app can be run through Docker or local scripts. Generated videos are stored under `backend/results/`, while uploaded files are staged under `backend/uploads/`. Model weights are downloaded separately because they are too large to commit to Git.
